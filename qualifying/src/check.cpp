@@ -6,40 +6,61 @@ int check(string input, string output) {
     ifstream in(input);
     ifstream out(output);
     int c; in>>c;
-    set <string> l[c];
-    set <string> d[c];
+    int p; in>>p;
+    map<string, map<string,int>> skills; //skills[name][skill] = level
 
     for (int i=0; i<c; i++) {
-        int L; in>>L;
-        for (int j=0; j<L; j++) {
-            string s; in>>s;
-            l[i].insert(s);
+        string name; in>>name;
+        int n; in>>n;
+        map<string, int> m;
+        for (int j=0; j<n; j++) {
+            string skill; in>>skill;
+            int l; in>>l;
+            m[skill] = l;
         }
-        int D; in>>D;
-        for (int j=0; j<D; j++) {
-            string s; in>>s;
-            d[i].insert(s);
-        }
+        skills[name] = m;
     }
 
-    set <string> ing;
-    int count; out>>count;
-    for (int i=0; i<count; i++) {
-        string s; out>>s; ing.insert(s);
-    }
-    int score = 0;
-    for (int i=0; i<c; i++) {
-        bool ok = true;
-        for (string s : l[i]) {
-            ok &= ing.count(s) > 0;
+    map<string, int> days; //days[project] = days needed
+    map<string, int> score; //scores[project] = score gained
+    map<string, int> bbefore;
+    map<string, map<string, int>> roles;
+    for (int i=0; i<p; i++) {
+        string name; in>>name;
+        int d; in>>d;
+        days[name] = d;
+        int s; in>>s;
+        score[name] = s;
+        int b; in>>b;
+        bbefore[name] = b;
+        int r; in>>r;
+        map<string, int> m;
+        for (int j=0; j<r; j++) {
+            string x; in>>x;
+            int l; in>>l;
+            m[x] = l;
         }
-        for (string s : d[i]) {
-            ok &= ing.count(s) == 0;
-        }
-        if (ok)
-            score++;
+        roles[name] = m;
     }
-    return score;
+
+    int e; out>>e;
+    map<string, vector<string>> ROLES;
+    for (int i=0; i<e; i++) {
+        string name; out>>name;
+        vector<string> v;
+        for (auto kv: roles[name]) {
+            string r; out>>r;
+            v.push_back(r);
+        }
+        // cout<<name<<endl;
+        ROLES[name] = v;
+    }
+    
+    int SCORE = 0;
+    for (auto kv : ROLES) {
+        SCORE += score[kv.first];
+    }
+    return SCORE;
 }
 
 signed main(int argc, char *argv[]) {
