@@ -16,7 +16,43 @@ void init() {
 }
 
 void solve() {
+	int c; cin>>c;
+    int p; cin>>p;
+    map<string, map<string,int>> skills; //skills[name][skill] = level
 
+    for (int i=0; i<c; i++) {
+        string name; cin>>name;
+        int n; cin>>n;
+        map<string, int> m;
+        for (int j=0; j<n; j++) {
+            string skill; cin>>skill;
+            int l; cin>>l;
+            m[skill] = l;
+        }
+        skills[name] = m;
+    }
+
+    map<string, int> days; //days[project] = days needed
+    map<string, int> score; //scores[project] = score gained
+    map<string, int> bbefore;
+    map<string, map<string, int>> roles;
+    for (int i=0; i<p; i++) {
+        string name; cin>>name;
+        int d; cin>>d;
+        days[name] = d;
+        int s; cin>>s;
+        score[name] = s;
+        int b; cin>>b;
+        bbefore[name] = b;
+        int r; cin>>r;
+        map<string, int> m;
+        for (int j=0; j<r; j++) {
+            string x; cin>>x;
+            int l; cin>>l;
+            m[x] = l;
+        }
+        roles[name] = m;
+    }
 }
 
 int main() {
