@@ -1,113 +1,193 @@
 #include <bits/stdc++.h>
-#define int long long
 using namespace std;
-#define pb push_back
-#define vi vector<int>
-const int INF=(int)1e18;
-const int mod=1000000007;
-#define sz(x) (x).size()
- 
- 
- 
-int exp(int k,int m){
-    if (m==0){
-        return 1;
-    }
-    int half=exp(k,m/2);
-    if (m%2==1){
-        return (((half*half)%mod)*k)%mod;
-    }
-    else{
-        return (half*half)%mod;
-    }
-}
-int inv(int x){
-    return exp(x,mod-2);
-}
-int comb(int n,int r){
-    int ans=1;
-    for (int i=1;i<=r;i++){
-        ans*=(n-i+1);
-        ans%=mod;
-        ans*=inv(i);
-        ans%=mod;
-    }
-    return ans;
-}
 
- 
-signed main(){
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-    int c;
-    cin>>c;
-    vector<set<string>> likes(c),dislikes(c);
+#define MOD 1000000007
+#define rep(i, a, b) for (auto i = (a); i < (b); ++i)
+#define per(i, a, b) for (auto i = (b); i-- > (a);)
 
-    for (int i=0;i<c;i++){
-        int l;
-        cin>>l;
-        for (int j=0;j<l;j++){
-            string s;
-            cin>>s;
-            likes[i].insert(s);
-        }
-        int d;
-        cin>>d;
-        for (int j=0;j<d;j++){
-            string s;
-            cin>>s;
-            dislikes[i].insert(s);
+typedef long long ll;
+typedef long double ld;
+typedef vector<int> vi;
+typedef pair<int, int> pi;
+
+void init()
+{
+    // ios_base::sync_with_stdio(false);
+    // cin.tie(NULL);
+}
+map<string, map<string, int>> skills; // skills[name][skill] = level
+
+map<string, int> days;  // days[project] = days needed
+map<string, int> score; // scores[project] = score gained
+map<string, int> bbefore;
+map<string, vector<pair<string, int>>> roles;
+
+vector<string> assigned;
+
+bool fulfill(string skill, int level)
+{
+    for (auto i : skills)
+    {
+        if (find(assigned.begin(), assigned.end(), i.first) != assigned.end())
+        {
+            if (i.second[skill] >= level)
+            {
+                return true;
+            }
         }
     }
-    vector<vector<int>> adj(c);
-    for (int i=0;i<c;i++){
-        for (int j=i+1;j<c;j++){
-            for (string s:likes[i]){
-                if (dislikes[j].count(s)!=0){
-                    adj[i].pb(j);
-                    adj[j].pb(i);
-                    break;
+    return false;
+}
+
+vector<string> check(string project)
+{
+    assigned.clear();
+    map<string, bool> completed;
+    vector<pair<int, string>> opened;
+    for (auto i : roles[project])
+    {
+        opened.clear();
+        for (auto j : skills)
+        {
+            if (find(assigned.begin(), assigned.end(), j.first) != assigned.end())
+            {
+                continue;
+            }
+            if (j.second[i.first] >= i.second)
+            {
+                int cnt = 0;
+                completed[i.first] = true;
+                for (auto k : roles[project])
+                {
+                    if (completed.find(k.first) == completed.end() && j.second[k.first] >= k.second)
+                    {
+                        cnt++;
+                    }
+                }
+                opened.emplace_back(make_pair(cnt, j.first));
+            }
+        }
+        if (opened.empty())
+        {
+            return {};
+        }
+        else
+        {
+            sort(opened.begin(), opened.end());
+            string curr = opened[opened.size() - 1].second;
+            assigned.emplace_back(curr);
+            for (auto k : roles[project])
+            {
+                if (completed.find(k.first) == completed.end() && skills[curr][k.first] >= k.second)
+                {
+                    k.second -= 1;
+                    completed[k.first] = true;
                 }
             }
         }
     }
-    vector<bool> considering(c,1);
-    vector<pair<int,int>> degnode;
-    for (int i=0;i<c;i++){
-        degnode.pb(make_pair(adj[i].size(),i));
-    }
-    vi final;
-    sort(degnode.begin(),degnode.end());
-    for (int i=0;i<c;i++){
-        if (!considering[i]){
-            continue;
+    return assigned;
+}
+
+void solve()
+{
+    int c;
+    cin >> c;
+    int p;
+    cin >> p;
+
+    for (int i = 0; i < c; i++)
+    {
+        string name;
+        cin >> name;
+        int n;
+        cin >> n;
+        map<string, int> m;
+        for (int j = 0; j < n; j++)
+        {
+            string skill;
+            cin >> skill;
+            int l;
+            cin >> l;
+            m[skill] = l;
         }
-        final.pb(i);
-        for (int j:adj[i]){
-            considering[j]=0;
+        skills[name] = m;
+    }
+
+    for (int i = 0; i < p; i++)
+    {
+        string name;
+        cin >> name;
+        int d;
+        cin >> d;
+        days[name] = d;
+        int s;
+        cin >> s;
+        score[name] = s;
+        int b;
+        cin >> b;
+        bbefore[name] = b;
+        int r;
+        cin >> r;
+        vector<pair<string, int>> m;
+        for (int j = 0; j < r; j++)
+        {
+            string x;
+            cin >> x;
+            int l;
+            cin >> l;
+            m.emplace_back(make_pair(x, l));
         }
-
-        
+        roles[name] = m;
     }
-    set<string> ingredients;
-    for (int x:final){
-        for (string s:likes[x]){
-            ingredients.insert(s);
+    vector<vector<string>> ans;
+    map<string, bool> finished;
+    bool flag = true;
+    int cnt = 0;
+    while (flag && cnt < 1000)
+    {
+        cnt++;
+        flag = false;
+        for (auto proj : bbefore)
+        {
+            if (finished[proj.first])
+            {
+                continue;
+            }
+            vector<string> ass = check(proj.first);
+            if (!ass.empty())
+            {
+                flag = true;
+                ans.push_back({proj.first});
+                for (auto u : ass)
+                {
+                    ans[ans.size() - 1].push_back(u);
+                }
+                finished[proj.first] = true;
+                break;
+            }
         }
     }
-    cout<<ingredients.size()<<" ";
-    for (string s:ingredients){
-        cout<<s<<" ";
+    cout << ans.size() << "\n";
+    for (auto u : ans)
+    {
+        cout << u[0] << "\n";
+        for (int i = 1; i < u.size(); i++)
+        {
+            cout << u[i] << " ";
+        }
+        cout << "\n";
     }
+}
 
-
-
-
-
-    
- 
- 
-    
- 
+int main()
+{
+    init();
+    int t = 1;
+    // cin >> t;
+    while (t-- > 0)
+    {
+        solve();
+    }
     return 0;
 }
