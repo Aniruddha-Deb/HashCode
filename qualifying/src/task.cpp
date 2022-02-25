@@ -43,8 +43,10 @@ vector<string> check(string project)
 {
     assigned.clear();
     map<string, bool> completed;
+    map<string, bool> mentored;
     vector<pair<int, string>> opened;
-    for (auto i : roles[project])
+    vector<pair<string, int>> temp = roles[project];
+    for (auto i : temp)
     {
         opened.clear();
         for (auto j : skills)
@@ -57,7 +59,7 @@ vector<string> check(string project)
             {
                 int cnt = 0;
                 completed[i.first] = true;
-                for (auto k : roles[project])
+                for (auto k : temp)
                 {
                     if (completed.find(k.first) == completed.end() && j.second[k.first] >= k.second)
                     {
@@ -76,14 +78,22 @@ vector<string> check(string project)
             sort(opened.begin(), opened.end());
             string curr = opened[opened.size() - 1].second;
             assigned.emplace_back(curr);
-            for (auto k : roles[project])
+            for (auto k : temp)
             {
-                if (completed.find(k.first) == completed.end() && skills[curr][k.first] >= k.second)
+                if (completed.find(k.first) == completed.end() && mentored.find(k.first) == mentored.end() && skills[curr][k.first] >= k.second)
                 {
                     k.second -= 1;
-                    completed[k.first] = true;
+                    mentored[k.first] = true;
                 }
             }
+        }
+    }
+    int len = assigned.size();
+    for (int i = 0; i < len; i++)
+    {
+        if (skills[assigned[i]][roles[project][i].first] <= roles[project][i].second)
+        {
+            skills[assigned[i]][roles[project][i].first]++;
         }
     }
     return assigned;
@@ -142,28 +152,38 @@ void solve()
     }
     vector<vector<string>> ans;
     map<string, bool> finished;
+    vector<pair<int, string>> priority;
     bool flag = true;
-    int cnt = 0;
-    while (flag && cnt < 1000)
+    int cnt = 0, time = 0;
+    while (flag && cnt < 400)
     {
         cnt++;
+        cerr << cnt << "\n";
         flag = false;
-        for (auto proj : bbefore)
+        priority.clear();
+        for (auto u : bbefore)
         {
-            if (finished[proj.first])
+            priority.emplace_back(make_pair(max(0, score[u.first] - max(0, time + days[u.first] - bbefore[u.first])), u.first));
+        }
+        sort(priority.begin(), priority.end());
+        reverse(priority.begin(), priority.end());
+        for (auto proj : priority)
+        {
+            if (finished[proj.second] || proj.first == 0)
             {
                 continue;
             }
-            vector<string> ass = check(proj.first);
+            vector<string> ass = check(proj.second);
             if (!ass.empty())
             {
                 flag = true;
-                ans.push_back({proj.first});
+                ans.push_back({proj.second});
                 for (auto u : ass)
                 {
                     ans[ans.size() - 1].push_back(u);
                 }
-                finished[proj.first] = true;
+                finished[proj.second] = true;
+                time += days[proj.second];
                 break;
             }
         }
